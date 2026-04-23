@@ -3,10 +3,41 @@ Hugging Face Spaces Entry Point
 This file is required for Hugging Face Spaces deployment
 """
 
-# Import the Gradio app
-from app.gradio_app import create_interface
+import sys
+import os
+from pathlib import Path
+
+# Print diagnostic information
+print("="*60)
+print("DIAGNOSTIC INFORMATION")
+print("="*60)
+print(f"Python version: {sys.version}")
+print(f"Current directory: {os.getcwd()}")
+print(f"Files in current directory: {os.listdir('.')}")
+print(f"app/ folder exists: {os.path.exists('app')}")
+print(f"src/ folder exists: {os.path.exists('src')}")
+print(f"models/ folder exists: {os.path.exists('models')}")
+print(f"models/best_model.pt exists: {os.path.exists('models/best_model.pt')}")
+print("="*60)
+
+try:
+    # Import the Gradio app
+    from app.gradio_app import create_interface
+    print("✅ Successfully imported create_interface")
+except Exception as e:
+    print(f"❌ Error importing: {e}")
+    import traceback
+    traceback.print_exc()
+    raise
 
 # Create and launch the interface
 if __name__ == "__main__":
-    demo = create_interface()
-    demo.launch()
+    try:
+        demo = create_interface()
+        print("✅ Successfully created interface")
+        demo.launch()
+    except Exception as e:
+        print(f"❌ Error launching: {e}")
+        import traceback
+        traceback.print_exc()
+        raise
