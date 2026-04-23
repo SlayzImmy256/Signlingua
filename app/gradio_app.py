@@ -353,13 +353,26 @@ class SignLanguageApp:
             
             # Translate
             if self.translation_available:
-                result = self.translation_pipeline.process(
-                    english_text,
-                    target_language=target_language,
-                    generate_audio=enable_audio
-                )
-                translated_text = result['translated_text']
-                audio_path = result['audio_path']
+                try:
+                    result = self.translation_pipeline.process(
+                        english_text,
+                        target_language=target_language,
+                        generate_audio=enable_audio
+                    )
+                    translated_text = result['translated_text']
+                    audio_path = result['audio_path']
+                    
+                    # Log audio generation status
+                    if enable_audio:
+                        if audio_path:
+                            logger.info(f"✅ Audio generated successfully: {audio_path}")
+                        else:
+                            logger.warning("⚠️ Audio generation failed")
+                            
+                except Exception as e:
+                    logger.error(f"Translation/Audio error: {e}")
+                    translated_text = english_text
+                    audio_path = None
             else:
                 # Demo mode - no translation
                 translated_text = f"[Demo] {english_text} (translation not available)"
@@ -663,7 +676,9 @@ def create_interface():
                     
                     audio_output = gr.Audio(
                         label="🔊 Audio Output",
-                        type="filepath"
+                        type="filepath",
+                        autoplay=True,
+                        show_label=True
                     )
         
         # Features section

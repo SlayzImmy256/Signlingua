@@ -158,6 +158,7 @@ class TextToSpeech:
             Path to generated audio file or None if failed
         """
         if not text or not text.strip():
+            logger.warning("Empty text provided for TTS")
             return None
         
         try:
@@ -172,11 +173,29 @@ class TextToSpeech:
             )
             tts.save(temp_file.name)
             
-            logger.info(f"Generated speech for text: '{text}' in language: {language_code}")
+            logger.info(f"✅ Generated speech for text: '{text}' in language: {language_code}")
+            logger.info(f"   Audio saved to: {temp_file.name}")
             return temp_file.name
         
         except Exception as e:
-            logger.error(f"TTS error: {e}")
+            logger.error(f"❌ TTS error for text '{text}' in language '{language_code}': {e}")
+            
+            # Try fallback to English if original language failed
+            if language_code != 'en':
+                try:
+                    logger.info("Attempting fallback to English TTS...")
+                    tts = gTTS(text=text, lang='en', slow=slow)
+                    temp_file = tempfile.NamedTemporaryFile(
+                        delete=False, 
+                        suffix='.mp3',
+                        dir=self.temp_dir
+                    )
+                    tts.save(temp_file.name)
+                    logger.info(f"✅ Fallback English TTS successful")
+                    return temp_file.name
+                except Exception as fallback_error:
+                    logger.error(f"❌ Fallback TTS also failed: {fallback_error}")
+            
             return None
 
 
@@ -237,11 +256,22 @@ class SignLanguageTranslationPipeline:
         
         # Generate audio
         if generate_audio and self.enable_tts and self.tts:
+            logger.info(f"🔊 Generating audio for: '{result['translated_text']}' in {language_code}")
             audio_path = self.tts.generate_speech(
                 result['translated_text'],
                 language_code=language_code
             )
             result['audio_path'] = audio_path
+            
+            if audio_path:
+                logger.info(f"✅ Audio generation successful")
+            else:
+                logger.warning(f"⚠️ Audio generation failed for language: {language_code}")
+        else:
+            if not generate_audio:
+                logger.info("🔇 Audio generation disabled by user")
+            elif not self.enable_tts:
+                logger.warning("⚠️ TTS not enabled in pipeline")
         
         return result
     
